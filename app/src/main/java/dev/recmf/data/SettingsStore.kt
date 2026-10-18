@@ -129,8 +129,12 @@ data class WatchSettings(
      * because it is the one thing reCMF sends to a third party at all: a plain GET of a
      * public file from MediaTek, with nothing identifying attached, but a request the app
      * would not otherwise make.
+     *
+     * Off by default in this build: the file arrives over plain HTTP and is then uploaded
+     * to the watch, and nothing the watch is sent on its own should come from an
+     * unauthenticated download. Turn it on in settings for a faster GPS fix.
      */
-    val gpsAlmanacAuto: Boolean = true,
+    val gpsAlmanacAuto: Boolean = false,
 
     /** When the watch was last given orbits, so they are refreshed before they run out. */
     val almanacSentAtMillis: Long = 0L,
@@ -255,7 +259,7 @@ class SettingsStore(private val context: Context) {
             notificationsEnabled = prefs[KEY_NOTIFICATIONS] ?: false,
             notifyOnlyWhenScreenOff = prefs[KEY_SCREEN_OFF_ONLY] ?: true,
             phoneAlarmsEnabled = prefs[KEY_PHONE_ALARMS] ?: false,
-            gpsAlmanacAuto = prefs[KEY_ALMANAC_AUTO] ?: true,
+            gpsAlmanacAuto = prefs[KEY_ALMANAC_AUTO] ?: false,
             almanacSentAtMillis = prefs[KEY_ALMANAC_SENT_AT] ?: 0L,
             almanacFormatSent = prefs[KEY_ALMANAC_FORMAT] ?: 0,
             autoSyncSeconds = prefs[KEY_AUTO_SYNC] ?: 300,
