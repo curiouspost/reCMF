@@ -56,7 +56,7 @@ object UpdateCheck {
      * its users the upstream build, which is signed with a different key and will not
      * install over theirs.
      */
-    const val REPOSITORY: String = "Bendy3192/reCMF"
+    const val REPOSITORY: String = "curiouspost/reCMF"
 
     /** The asset name the workflow uploads. */
     const val APK_NAME: String = "recmf.apk"
