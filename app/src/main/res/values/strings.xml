@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">reCMF</string>
+    <string name="agent_app_name" translatable="false">reCMF Agents</string>
 
     <string name="notification_channel_connection">Watch connection</string>
     <string name="notification_channel_connection_description">Shows while reCMF is keeping your watch connected.</string>

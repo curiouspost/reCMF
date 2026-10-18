@@ -168,6 +168,13 @@ class CmfConnection(
 
     /** Queues [cmd] on the command characteristic. Returns false if it could not be written. */
     suspend fun send(cmd: CmfCommand, payload: ByteArray = ByteArray(0)): Boolean {
+        // Nothing in this app has reason to wipe the watch, and a single authenticated
+        // frame is all it takes. Refused here, at the one door every command goes through,
+        // so no feature — or bug — can send it. Reset from the watch's own menu instead.
+        if (cmd == CmfCommand.FACTORY_RESET) {
+            ProtocolLog.note("Refused to send FACTORY_RESET")
+            return false
+        }
         val characteristic = commandWrite
         if (characteristic == null) {
             ProtocolLog.sent(cmd, payload, ok = false)

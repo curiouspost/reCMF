@@ -181,6 +181,27 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Agent Control Mode settings, as a launcher entry of its own. -->
+        <activity
+            android:name=".agent.AgentSettingsActivity"
+            android:exported="true"
+            android:label="@string/agent_app_name"
+            android:taskAffinity="dev.recmf.agents"
+            android:theme="@style/Theme.ReCMF">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Opened only from this app's own approval notification. -->
+        <activity
+            android:name=".agent.ApprovalActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity="dev.recmf.agents.approval"
+            android:theme="@style/Theme.ReCMF" />
+
         <service
             android:name=".service.WatchService"
             android:exported="false"

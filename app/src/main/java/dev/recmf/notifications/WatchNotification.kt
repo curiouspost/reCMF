@@ -85,6 +85,11 @@ data class WatchNotification(
      * phone, and an incoming call turns the screen on by itself.
      */
     val isCall: Boolean = false,
+    /**
+     * A reply to a press made on the watch (Agent Control Mode). The wearer is looking at
+     * the watch, not the phone, so the screen-on rule does not apply. Not in the payload.
+     */
+    val answersWrist: Boolean = false,
 ) {
     /**
      * ```

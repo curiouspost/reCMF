@@ -42,6 +42,7 @@ import dev.recmf.notifications.OutgoingNotifications
 import dev.recmf.weather.WeatherClient
 import dev.recmf.weather.WeatherLocation
 import dev.recmf.weather.WeatherSnapshot
+import dev.recmf.agent.AgentBridge
 import dev.recmf.media.MediaWatcher
 import dev.recmf.media.NowPlaying
 import dev.recmf.gps.AlmanacSource
@@ -142,6 +143,21 @@ class WatchService : LifecycleService() {
 
     private val media by lazy { MediaWatcher(this) }
     private val ringer by lazy { PhoneRinger(this) }
+
+    /**
+     * Agent Control Mode. Off until switched on in "reCMF Agents"; while off, every hook
+     * below passes straight through and the watch behaves exactly as before.
+     */
+    private val agent by lazy {
+        AgentBridge(applicationContext, lifecycleScope) {
+            lifecycleScope.launch {
+                // The status changed, not the track, so the "unchanged" guard must not
+                // stop the resend.
+                nowPlayingLock.withLock { lastSentNowPlaying = null }
+                sendNowPlaying()
+            }
+        }
+    }
 
     /** So an empty sleep reply is reported once a connection rather than every refresh. */
     private var emptySleepReported = false
@@ -265,6 +281,7 @@ class WatchService : LifecycleService() {
         // timer is five, so a polled watch would spend half its time showing the song
         // before.
         media.start { lifecycleScope.launch { sendNowPlaying() } }
+        agent.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -346,6 +363,7 @@ class WatchService : LifecycleService() {
 
     override fun onDestroy() {
         unregisterReceiver(alarmsChanged)
+        agent.stop()
         media.stop()
         ringer.stop()
         autoSyncJob?.cancel()
@@ -551,7 +569,7 @@ class WatchService : LifecycleService() {
         nowPlayingLock.withLock {
             if (_status.value != ConnectionState.READY) return
 
-            val playing = media.nowPlaying()
+            val playing = agent.nowPlaying(media.nowPlaying())
             if (playing == lastSentNowPlaying) return
 
             connection.send(
@@ -739,7 +757,9 @@ class WatchService : LifecycleService() {
                 // A ringing phone is the exception, and it is not a small one: an incoming
                 // call turns the screen on by itself, so this rule would have silenced
                 // exactly the notification the wrist is for.
-                if (prefs.notifyOnlyWhenScreenOff && isScreenOn() && !notification.isCall) {
+                if (prefs.notifyOnlyWhenScreenOff && isScreenOn() &&
+                    !notification.isCall && !notification.answersWrist
+                ) {
                     return@collect
                 }
 
@@ -1745,6 +1765,12 @@ class WatchService : LifecycleService() {
                 val button = CmfMusic.parseButton(message.payload)
                 if (button == null) {
                     ProtocolLog.note("Unrecognised music button")
+                } else if (agent.onMusicButton(button)) {
+                    // Taken by Agent Control Mode. The watch may have flipped its own
+                    // play/pause icon; resending puts the agent screen back as it was.
+                    ProtocolLog.note("Agent mode: $button")
+                    nowPlayingLock.withLock { lastSentNowPlaying = null }
+                    sendNowPlaying()
                 } else if (media.press(button)) {
                     // The phone's state has just changed under the watch, and it will not
                     // find out any other way — there is no notification for "the volume
